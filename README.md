@@ -1,9 +1,3 @@
-# Project: Data Pipeline with Airflow and AWS
-
-<img src='./imgs/audio_wallpaper_airflow.png' style='width: 100%' alt='project wallpaper' />
-
-> **Note:** This project is part of [Data Engineering with AWS nanodegree program](https://www.udacity.com/course/data-engineer-nanodegree--nd027).
-
 ## 1. Project Description
 A music streaming company, _Sparkify_, has decided that it is time to introduce more automation and monitoring to their data warehouse ETL pipelines and come to the conclusion that the best tool to achieve this is **Apache Airflow**.
 
@@ -62,21 +56,7 @@ The data is divided into 3 datasets that reside in S3 (`us-west-2` region). Here
 
 <img src='./imgs/ER diagram - Udacity Project Data Warehouse.png' style='width: 100%; display: block; margin: auto' />
 
-## 5. Preparing the workspace
-- Create an **AWS IAM user** and a **AWS Redshift servless workspace**.
-  - See [`./notes/configure_AWS.md`](./notes/configure_AWS.md) for more details.
-- Install Airflow Locally (Ubuntu)
-  - See [`./notes/install_airflow_ubuntu.md`](./notes/install_airflow_ubuntu.md) for more details.
-- Setting up Connections between Airflow and AWS
-  - See [`./notes/setup_airflow_connections_and_variables.md`](./notes/install_airflow_ubuntu.md) for more details.
-- **Create the Data Warehouse Tables**
-  - I coded a **DAG** to do create the **data warehouse tables**
-  - **File:** `./dags/create_tables_dag.py`
-  - Open the **Airflow UI**, enable and execute the DAG called `create_tables` 
-  - Open the _Query Editor_ on AWS Redshift Servless or use [`SQL Workbench`](../project-data-warehouse/SQL_workbench_on_Redshift.md) to check the created tables
-  > **Notes**: Initially, I tried to run a single `PostgresOperator` passing a sql file with all SQL creation statements. However, I got the error: 'cannot insert multiple commands into a prepared statement'. So, I converted the sql file to a python one and I modified my DAG to perform _multiple tasks_, **one for each SQL create statement.**
-
-## 6. Data Pipeline
+## 5. Data Pipeline
 The proposed **Airflow data pipeline** can be found in `./dags/etl_dag.py`. It consists of a set of **tasks** defined by **custom Airflow operators**.
 
 - To run it, go to **Airflow UI**, enable and run the **`etl` DAG**.
