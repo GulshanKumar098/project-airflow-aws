@@ -1,99 +1,105 @@
+# ============================================
+# SQL Scripts to Create Tables in Redshift
+# Author: <Your Name>
+# ============================================
+
+# ---------- Artists Table ----------
 CREATE_ARTISTS_TABLE_SQL = """
-CREATE TABLE public.artists (
-	artistid varchar(256) NOT NULL,
-	name varchar(256),
-	location varchar(256),
-	lattitude numeric(18,0),
-	longitude numeric(18,0)
+CREATE TABLE IF NOT EXISTS public.artists (
+    artist_id      VARCHAR(256) PRIMARY KEY,
+    artist_name    VARCHAR(256),
+    artist_location VARCHAR(256),
+    artist_latitude NUMERIC(18,0),
+    artist_longitude NUMERIC(18,0)
 );
 """
 
+# ---------- Songplays Fact Table ----------
 CREATE_SONGPLAYS_TABLE_SQL = """
-CREATE TABLE public.songplays (
-	playid varchar(32) NOT NULL,
-	start_time timestamp NOT NULL,
-	userid int4 NOT NULL,
-	"level" varchar(256),
-	songid varchar(256),
-	artistid varchar(256),
-	sessionid int4,
-	location varchar(256),
-	user_agent varchar(256),
-	CONSTRAINT songplays_pkey PRIMARY KEY (playid)
+CREATE TABLE IF NOT EXISTS public.songplays (
+    play_id       VARCHAR(32) PRIMARY KEY,
+    start_time    TIMESTAMP NOT NULL,
+    user_id       INT NOT NULL,
+    level         VARCHAR(50),
+    song_id       VARCHAR(256),
+    artist_id     VARCHAR(256),
+    session_id    INT,
+    location      VARCHAR(256),
+    user_agent    VARCHAR(256)
 );
 """
 
+# ---------- Songs Dimension Table ----------
 CREATE_SONGS_TABLE_SQL = """
-CREATE TABLE public.songs (
-	songid varchar(256) NOT NULL,
-	title varchar(256),
-	artistid varchar(256),
-	"year" int4,
-	duration numeric(18,0),
-	CONSTRAINT songs_pkey PRIMARY KEY (songid)
+CREATE TABLE IF NOT EXISTS public.songs (
+    song_id     VARCHAR(256) PRIMARY KEY,
+    title       VARCHAR(256),
+    artist_id   VARCHAR(256),
+    release_year INT,
+    duration    NUMERIC(18,0)
 );
 """
 
-
+# ---------- Time Dimension Table ----------
 CREATE_TIME_TABLE_SQL = """
-CREATE TABLE public."time" (
-	start_time timestamp NOT NULL,
-	"hour" int4,
-	"day" int4,
-	week int4,
-	"month" varchar(256),
-	"year" int4,
-	weekday varchar(256),
-	CONSTRAINT time_pkey PRIMARY KEY (start_time)
+CREATE TABLE IF NOT EXISTS public.time (
+    start_time TIMESTAMP PRIMARY KEY,
+    hour       INT,
+    day        INT,
+    week       INT,
+    month      INT,
+    year       INT,
+    weekday    VARCHAR(50)
 );
 """
 
+# ---------- Users Dimension Table ----------
 CREATE_USERS_TABLE_SQL = """
-CREATE TABLE public.users (
-	userid int4 NOT NULL,
-	first_name varchar(256),
-	last_name varchar(256),
-	gender varchar(256),
-	"level" varchar(256),
-	CONSTRAINT users_pkey PRIMARY KEY (userid)
+CREATE TABLE IF NOT EXISTS public.users (
+    user_id     INT PRIMARY KEY,
+    first_name  VARCHAR(256),
+    last_name   VARCHAR(256),
+    gender      VARCHAR(10),
+    level       VARCHAR(50)
 );
 """
 
-
+# ---------- Staging Events Table ----------
 CREATE_STAGING_EVENTS_TABLE_SQL = """
-CREATE TABLE public.staging_events (
-	artist varchar(256),
-	auth varchar(256),
-	firstname varchar(256),
-	gender varchar(256),
-	iteminsession int4,
-	lastname varchar(256),
-	length numeric(18,0),
-	"level" varchar(256),
-	location varchar(256),
-	"method" varchar(256),
-	page varchar(256),
-	registration numeric(18,0),
-	sessionid int4,
-	song varchar(256),
-	status int4,
-	ts int8,
-	useragent varchar(256),
-	userid int4
+CREATE TABLE IF NOT EXISTS public.staging_events (
+    artist          VARCHAR(256),
+    auth            VARCHAR(50),
+    first_name      VARCHAR(256),
+    gender          VARCHAR(10),
+    item_in_session INT,
+    last_name       VARCHAR(256),
+    song_length     NUMERIC(18,0),
+    user_level      VARCHAR(50),
+    location        VARCHAR(256),
+    method          VARCHAR(10),
+    page            VARCHAR(50),
+    registration    NUMERIC(18,0),
+    session_id      INT,
+    song_name       VARCHAR(256),
+    status          INT,
+    timestamp_ms    BIGINT,
+    user_agent      VARCHAR(256),
+    user_id         INT
 );
 """
 
+# ---------- Staging Songs Table ----------
 CREATE_STAGING_SONGS_TABLE_SQL = """
-CREATE TABLE public.staging_songs (
-	num_songs int4,
-	artist_id varchar(256),
-	artist_name varchar(256),
-	artist_latitude numeric(18,0),
-	artist_longitude numeric(18,0),
-	artist_location varchar(256),
-	song_id varchar(256),
-	title varchar(256),
-	duration numeric(18,0),
-	"year" int4
+CREATE TABLE IF NOT EXISTS public.staging_songs (
+    num_songs         INT,
+    artist_id         VARCHAR(256),
+    artist_name       VARCHAR(256),
+    artist_latitude   NUMERIC(18,0),
+    artist_longitude  NUMERIC(18,0),
+    artist_location   VARCHAR(256),
+    song_id           VARCHAR(256),
+    song_title        VARCHAR(256),
+    duration          NUMERIC(18,0),
+    release_year      INT
 );
 """

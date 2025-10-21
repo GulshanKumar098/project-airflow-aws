@@ -1,22 +1,25 @@
 import logging
 import pendulum
-
 from airflow.decorators import dag, task
 
-# @dag decorates the greet_task to denote it's the main function
+
+# Define a simple DAG that logs a greeting message
 @dag(
-    start_date=pendulum.now()
+    dag_id="simple_greeting_workflow",
+    start_date=pendulum.now(),
+    schedule_interval=None,
+    catchup=False,
+    tags=["example", "logging"]
 )
-def greet_flow_dag():
-    
-    # @task decorates the re-usable hello_world_task - it can be called as often as needed in the DAG
-    @task
-    def hello_world_task():
-        logging.info("Hello World!")
+def greeting_pipeline():
 
-    # hello_world represents a discrete invocation of the hello_world_task
-    hello_world=hello_world_task()
+    @task(task_id="print_greeting")
+    def display_greeting():
+        logging.info("Greetings from Airflow DAG!")
 
-# greet_dag represents the invocation of the greet_flow_dag
-greet_dag=greet_flow_dag()
+    # Trigger the task execution
+    display_greeting()
 
+
+# Instantiate the DAG
+greeting_dag = greeting_pipeline()
