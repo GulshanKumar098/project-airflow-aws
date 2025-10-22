@@ -1,83 +1,202 @@
-## 1. Project Description
-A music streaming company, _Sparkify_, has decided that it is time to introduce more automation and monitoring to their data warehouse ETL pipelines and come to the conclusion that the best tool to achieve this is **Apache Airflow**.
+# **Sparkify Data Pipeline using Apache Airflow**
 
-They expect to create **high grade data pipelines** that are _dynamic_ and built from _reusable tasks_, can be _monitored_, and allow _easy backfills_. They alsowant to run _tests_ against their datasets _after the ETL steps_ have been executed to catch any _discrepancies_ in the datasets.
+## **1. Project Overview**
 
-### 🎯 Goal
-**Created a _data pipeline_ using _Apache Airflow_ that performs _ETL_ on _AWS_.**
+The music streaming company **Sparkify** wants to enhance automation and visibility in their data warehouse ETL workflows.  
+After evaluating several technologies, they selected **Apache Airflow** as the orchestration tool to manage and monitor their ETL processes effectively.
 
-The pipeline steps include:
-- _staging data_
-- _filling the data warehouse_, and
-- _running checks on the data_ as the final step.
+The goal of this project is to create **dynamic, modular, and reusable data pipelines** that:
+- Contain **parameterized and reusable tasks**
+- Allow **monitoring, scheduling, and backfills**
+- Include **data quality checks** after ETL execution
 
+### 🎯 **Objective**
+Develop an **ETL data pipeline on AWS** using **Apache Airflow** that performs the following steps:
+1. Load raw data from S3 into Redshift staging tables  
+2. Transform and populate fact and dimension tables  
+3. Run automated quality checks on the final data  
 
-## 2. Project data
+---
 
-- **Song data:** static data about artists and songs Song-data example:
+## **2. Project Data Sources**
 
-`{"num_songs": 1, "artist_id": "ARJIE2Y1187B994AB7", "artist_latitude": null, "artist_longitude": null, "artist_location": "", "artist_name": "Line Renaud", "song_id": "SOUPIRU12A6D4FA1E1", "title": "Der Kleine Dompfaff", "duration": 152.92036, "year": 0}`
-- **Log data:**: event data of service usage e.g. who listened what song, when, where, and with which client
-<img src='./imgs/log-data.png' style='width: 75%; display: block; margin: auto' />
-- This third file `s3://udacity-dend/log_json_path.json` contains the meta information that is required by AWS **to correctly load** `s3://udacity-dend/log_data` using the `COPY command`.
-<img src='./imgs/log-json-path.png' style='display: block; margin: auto' />
+The project uses datasets stored in **Amazon S3**.
 
-## 3. Database Schema Design
-**Staging Tables**: records the data from the files stored in S3.
-- `staging_events`
-- `staging_events`
+### **2.1 Song Data**
+Contains metadata for songs and artists.
 
-**Fact Table**
-- `songplays`: records in event data associated with _song plays_ (records with `page='NextSong'`)
+**Example record:**
+```json
+{
+  "num_songs": 1,
+  "artist_id": "ARJIE2Y1187B994AB7",
+  "artist_latitude": null,
+  "artist_longitude": null,
+  "artist_location": "",
+  "artist_name": "Line Renaud",
+  "song_id": "SOUPIRU12A6D4FA1E1",
+  "title": "Der Kleine Dompfaff",
+  "duration": 152.92036,
+  "year": 0
+}
+```
 
-**Dimension Tables**
-- `users`: users in the app
-- `songs`: songs in music database
-- `artists`: artists in music database
-- `time`: timestamps of records in songplays broken down into specific units
+### **2.2 Log Data**
 
-<img src='./imgs/ER diagram - Udacity Project Data Warehouse.png' style='width: 100%; display: block; margin: auto' />
+Represents user activity logs on the Sparkify platform, such as which user listened to which song, the time of play, and the device used.
 
-## 4. Data Pipeline
-The proposed **Airflow data pipeline** can be found in `./dags/etl_dag.py`. It consists of a set of **tasks** defined by **custom Airflow operators**.
+A JSON metadata file —\*\*s3://udacity-dend/log\_json\_path.json\*\* —is provided to correctly map fields when using Redshift’s **COPY** command to load data.
 
-- To run it, go to **Airflow UI**, enable and run the **`etl` DAG**.
+**3\. Data Warehouse Schema Design**
+------------------------------------
 
-The diagram below shows the proposed data pipeline with Aiflow.
+The Redshift warehouse is designed with **staging tables**, a **fact table**, and several **dimension tables** to support analytical queries efficiently.
 
-<img src='./imgs/data_pipeline.png' style='width: 100%' alt='proposed data pipeline using airflow' />
+### **3.1 Staging Tables**
 
-### Stage Operator
-- **File:** `./plugins/operators/stage_redshift.py`
+Temporary tables used to hold raw data before transformation:
 
-This **stage operator** is be able to load any _CSV and JSON formatted files_ from **S3 to Amazon Redshift**. The operator creates and runs a `SQL COPY statement` based on the parameters provided. 
+*   staging\_events
+    
+*   staging\_songs
+    
 
-- **`Stage_events`:** stage the original _log data_ from S3 to the **stating table** `staging_events`
-- **`Stage_songs`:** stage the original song data_ from S3 to the **stating table** `staging_songs`
+### **3.2 Fact Table**
 
-### Fact Operator
-- **File:** `./plugins/operators/load_fact.py`
+*   **songplays** — contains records of song play events (filtered by page = 'NextSong')
+    
 
-This operator transforms and loads data from the **staging tables** to a **fact table**. **Fact tables** are usually _so massive_ that they should only allow _append_ new data into it.
+### **3.3 Dimension Tables**
 
-- **`Load_songplays_fact_table`:** transform and load data from the **staging tables** to the **fact table** `songplays`
+*   **users** — user details from the app
+    
+*   **songs** — song metadata
+    
+*   **artists** — artist details
+    
+*   **time** — timestamps of songplays broken into units (hour, day, week, month, etc.)
+    
 
-### Dimension Operator
-- **File:** `./plugins/operators/load_dimension.py`
+**4\. Airflow Data Pipeline**
+-----------------------------
 
-This operator transforms and loads data from the **staging tables** to a **dimension table**. **Dimension loads** are often done with the _truncate-insert_ pattern where the target table is emptied before the load. Thus, we provided a parameter that allows switching between _insert modes_ when loading dimensions.
+The ETL workflow is defined in:
 
-- **`Load_artist_dim_table`:** transform and load data from the **staging tables** to the **dimension table** `artists`
-- **`Load_song_dim_table`:** transform and load data from the **staging tables** to the **dimension table** `songs`
-- **`Load_time_dim_table`:** transform and load data from the **staging tables** to the **dimension table** `time`
-- **`Load_user_dim_table`:** transform and load data from the **staging tables** to the **dimension table** `users`
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   ./dags/etl_dag.py   `
 
+### **4.1 How to Run the Pipeline**
 
-### Data Quality Operator
-- **File:** `./plugins/operators/data_quality.py`
+1.  Open the **Airflow Web UI**
+    
+2.  Enable the DAG named **etl**
+    
+3.  Trigger a manual run or let it execute as per the schedule
+    
 
-This final operator performs **quality checks** to our final data:
-- Check if the tables are not empty
-- Check if some NOT NULL columns do not have NULL values
+The DAG includes multiple **custom operators**, each responsible for a specific ETL stage.
 
-- **`Run_data_quality_checks`:** run the data quality checks to the final tables.
+### **4.2 Stage Operator**
+
+**File:** ./plugins/operators/stage\_redshift.py
+
+This operator loads raw data from **S3 to Amazon Redshift** using the COPY command.It supports both **CSV** and **JSON** data formats.
+
+**Functions:**
+
+*   Stage\_events → loads log data into staging\_events
+    
+*   Stage\_songs → loads song data into staging\_songs
+    
+
+**Features:**
+
+*   Configurable S3 path, table name, JSON path, and IAM credentials
+    
+*   Reusable for multiple datasets
+    
+
+### **4.3 Fact Table Load Operator**
+
+**File:** ./plugins/operators/load\_fact.py
+
+Loads transformed data into the **fact table (songplays)**.Fact tables generally contain a large volume of data, so this operator performs **append-only inserts**.
+
+**Function:**
+
+*   Load\_songplays\_fact\_table → inserts data into songplays
+    
+
+### **4.4 Dimension Table Load Operator**
+
+**File:** ./plugins/operators/load\_dimension.py
+
+Populates dimension tables from staging data.Supports two data load modes:
+
+*   **Append mode** → adds new rows
+    
+*   **Truncate-insert mode** → clears and reloads all data
+    
+
+**Functions:**
+
+*   Load\_user\_dim\_table
+    
+*   Load\_song\_dim\_table
+    
+*   Load\_artist\_dim\_table
+    
+*   Load\_time\_dim\_table
+    
+
+### **4.5 Data Quality Operator**
+
+**File:** ./plugins/operators/data\_quality.py
+
+This operator performs post-load validation checks to ensure data accuracy and completeness.
+
+**Quality Checks Include:**
+
+*   Ensuring target tables are **not empty**
+    
+*   Verifying that **NOT NULL** columns have valid values
+    
+
+**Function:**
+
+*   Run\_data\_quality\_checks → executes validation tests on all final tables
+    
+
+**5\. Project Workflow Summary**
+--------------------------------
+
+This project demonstrates how to design and implement a **robust ETL pipeline** using **Apache Airflow** and **Amazon Redshift**.The pipeline ensures:
+
+*   Data extraction from S3 into Redshift staging tables
+    
+*   Transformation and loading into analytics-ready schemas
+    
+*   Automated data validation after each pipeline run
+    
+
+The structure is modular, maintainable, and optimized for data reliability and scalability.
+
+**6\. Technologies Used**
+-------------------------
+
+*   **Apache Airflow** — Workflow orchestration
+    
+*   **Amazon Redshift** — Data warehousing
+    
+*   **Amazon S3** — Cloud data storage
+    
+*   **Python** — Script development and operator logic
+    
+*   **SQL** — Data transformation queries
+    
+
+**7\. Author**
+--------------
+
+**Name:** Gulshan
+
+**Project:** Sparkify Data Warehouse Automation using Apache Airflow
